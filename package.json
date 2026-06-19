@@ -1,0 +1,34 @@
+{
+  "name": "mac-cleaner-pro",
+  "version": "1.0.0",
+  "description": "A safer macOS cache cleanup utility that scans before cleaning.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "keywords": [
+    "macos",
+    "cleaner",
+    "electron",
+    "cache"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.local.maccleanerpro",
+    "productName": "Mac Cleaner Pro",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "dmg"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ]
+  }
+}

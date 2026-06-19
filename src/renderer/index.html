@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mac Cleaner Pro</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="summary" aria-label="Storage summary">
+        <div>
+          <p class="eyebrow">Mac Cleaner Pro</p>
+          <h1>Storage cleanup report</h1>
+          <p class="subtle">Scan first, review every target, then clean only what you selected.</p>
+        </div>
+        <div class="total-panel">
+          <span class="label">Total Potential Savings</span>
+          <strong id="totalSize">--</strong>
+          <span id="scanTime">Not scanned yet</span>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Cleanup controls">
+        <button id="scanButton" class="secondary" type="button">
+          <span aria-hidden="true">⌕</span>
+          Scan
+        </button>
+        <button id="cleanButton" class="primary" type="button" disabled>
+          <span aria-hidden="true">✓</span>
+          Clean Selected
+        </button>
+        <div class="toolbar-stat">
+          <span>Selected</span>
+          <strong id="selectedSize">--</strong>
+        </div>
+        <div class="toolbar-stat">
+          <span>Last Removed</span>
+          <strong id="lastRemoved">--</strong>
+        </div>
+      </section>
+
+      <section class="report" aria-label="Cleanup task report">
+        <div class="report-head">
+          <span>Cleanup Task</span>
+          <span>Size Found</span>
+        </div>
+        <div id="taskList" class="task-list"></div>
+      </section>
+
+      <section class="activity" aria-label="Cleaning results">
+        <div>
+          <h2>Activity</h2>
+          <p id="statusText">Ready to scan cache locations.</p>
+        </div>
+        <div id="resultList" class="result-list"></div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
