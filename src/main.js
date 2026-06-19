@@ -382,33 +382,76 @@ function hasExcludedDescendant(targetPath, excluded) {
 }
 
 async function scanHomebrew() {
-  const cachePaths = new Set([
-    homePath('Library/Caches/Homebrew')
-  ]);
+  const cachePaths = await getHomebrewCachePaths();
+  const cacheBytes = await scanPaths(cachePaths);
+  const dryRunBytes = await scanHomebrewCleanupDryRun();
 
-  try {
-    const { stdout } = await execFileAsync('/opt/homebrew/bin/brew', ['--cache']);
-    if (stdout.trim()) cachePaths.add(stdout.trim());
-  } catch {
+  return Math.max(cacheBytes, dryRunBytes);
+}
+
+async function cleanHomebrew() {
+  const brewPath = await resolveCommand(['/opt/homebrew/bin/brew', '/usr/local/bin/brew']);
+  const cachePaths = await getHomebrewCachePaths();
+
+  if (brewPath) {
+    await execBrew(brewPath, ['cleanup']);
+    await execBrew(brewPath, ['cleanup', '--prune=all']);
+  }
+
+  await removeContents(cachePaths);
+}
+
+async function getHomebrewCachePaths() {
+  const cachePaths = new Set([homePath('Library/Caches/Homebrew')]);
+  const brewPath = await resolveCommand(['/opt/homebrew/bin/brew', '/usr/local/bin/brew']);
+
+  if (brewPath) {
     try {
-      const { stdout } = await execFileAsync('/usr/local/bin/brew', ['--cache']);
+      const { stdout } = await execBrew(brewPath, ['--cache']);
       if (stdout.trim()) cachePaths.add(stdout.trim());
     } catch {
       // Homebrew is optional.
     }
   }
 
-  return scanPaths([...cachePaths]);
+  return [...cachePaths];
 }
 
-async function cleanHomebrew() {
+async function scanHomebrewCleanupDryRun() {
   const brewPath = await resolveCommand(['/opt/homebrew/bin/brew', '/usr/local/bin/brew']);
+  if (!brewPath) return 0;
 
-  if (brewPath) {
-    await execFileAsync(brewPath, ['cleanup', '-s'], { maxBuffer: 1024 * 1024 * 8 });
+  try {
+    const { stdout } = await execBrew(brewPath, ['cleanup', '--prune=all', '--dry-run']);
+    return parseHomebrewCleanupBytes(stdout);
+  } catch (error) {
+    return parseHomebrewCleanupBytes(`${error.stdout ?? ''}\n${error.stderr ?? ''}`);
+  }
+}
+
+async function execBrew(brewPath, args) {
+  return execFileAsync(brewPath, args, {
+    env: {
+      ...process.env,
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    },
+    maxBuffer: 1024 * 1024 * 32
+  });
+}
+
+function parseHomebrewCleanupBytes(output) {
+  const approximateMatch = output.match(/free approximately\s+([0-9.,]+)\s*([KMGT]?B)/i);
+  if (approximateMatch) {
+    return parseSize(approximateMatch[1].replaceAll(',', ''), approximateMatch[2]);
   }
 
-  await removeContents([homePath('Library/Caches/Homebrew')]);
+  return output
+    .split('\n')
+    .map((line) => line.match(/Would remove: .*\(([0-9.,]+)\s*([KMGT]?B)\)$/i))
+    .filter(Boolean)
+    .reduce((sum, match) => {
+      return sum + parseSize(match[1].replaceAll(',', ''), match[2]);
+    }, 0);
 }
 
 async function scanNpm() {
