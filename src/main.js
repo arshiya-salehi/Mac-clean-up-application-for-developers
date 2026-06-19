@@ -72,6 +72,14 @@ const taskDefinitions = [
     cleaner: () => removeContents([homePath('Library/Application Support/MobileSync/Backup')])
   },
   {
+    id: 'pythonCaches',
+    label: 'Python Caches',
+    detail: '__pycache__ folders under ~',
+    defaultSelected: false,
+    scanner: scanPythonCaches,
+    cleaner: cleanPythonCaches
+  },
+  {
     id: 'docker',
     label: 'Docker Cleanup',
     detail: 'docker system prune -af',
@@ -427,6 +435,45 @@ async function cleanNpm() {
   }
 
   await removeContents([homePath('.npm')]);
+}
+
+async function scanPythonCaches() {
+  const cachePaths = await findPythonCachePaths();
+  return scanPaths(cachePaths);
+}
+
+async function cleanPythonCaches() {
+  const cachePaths = await findPythonCachePaths();
+
+  await Promise.all(cachePaths.map((cachePath) => {
+    return fs.rm(cachePath, {
+      recursive: true,
+      force: true,
+      maxRetries: 2
+    });
+  }));
+}
+
+async function findPythonCachePaths() {
+  try {
+    const { stdout } = await execFileAsync('/usr/bin/find', [
+      os.homedir(),
+      '-type',
+      'd',
+      '-name',
+      '__pycache__',
+      '-prune'
+    ], {
+      maxBuffer: 1024 * 1024 * 32
+    });
+
+    return stdout
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 async function scanDocker() {
