@@ -80,6 +80,14 @@ const taskDefinitions = [
     cleaner: cleanPythonCaches
   },
   {
+    id: 'trash',
+    label: 'Trash',
+    detail: '~/.Trash',
+    defaultSelected: false,
+    scanner: () => scanPaths([homePath('.Trash')]),
+    cleaner: () => removeContents([homePath('.Trash')])
+  },
+  {
     id: 'docker',
     label: 'Docker Cleanup',
     detail: 'docker system prune -af',
